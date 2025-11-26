@@ -750,7 +750,7 @@ function CheckoutForm() {
                   <p className="text-sm font-semibold text-gray-700 mb-2">Payment Instructions:</p>
                   <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
                     <li>Enter your UPI ID above</li>
-                    <li>Click "Place Order" to proceed</li>
+                    <li>Click ""Place Order" → &quot;Place Order&quot;" to proceed</li>
                     <li>You will be redirected to complete UPI payment</li>
                     <li>Your order will be confirmed after successful payment</li>
                   </ol>
