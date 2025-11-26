@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Minus, Plus, Trash2, ShoppingBag, Image as ImageIcon, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import FormattedPrice from "@/components/FormattedPrice";
 
 function CartItemImage({ src, alt }: { src: string; alt: string }) {
   const [imageError, setImageError] = useState(false);
