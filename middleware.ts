@@ -16,15 +16,22 @@ function isSellerAuthenticated(request: NextRequest): boolean {
 
   // Session tokens are in format: SESSION-{timestamp}-{random}
   // Extract timestamp from token
-  const tokenParts = sessionToken.value.split('-');
+  // Use a split limit of 3 so the random portion can contain hyphens
+  const tokenParts = sessionToken.value.split('-', 3);
   if (tokenParts.length < 3 || tokenParts[0] !== 'SESSION') {
     return false;
   }
 
   // Check if token has valid format
-  const timestamp = parseInt(tokenParts[1], 10);
-  if (isNaN(timestamp)) {
+  let timestamp = parseInt(tokenParts[1], 10);
+  if (isNaN(timestamp) || timestamp <= 0) {
     return false;
+  }
+
+  // Normalize timestamp to milliseconds if it looks like seconds
+  // (epoch seconds ~1e9, epoch ms ~1e12+)
+  if (timestamp < 1e12) {
+    timestamp = timestamp * 1000;
   }
 
   // Check if session is expired (24 hours)
@@ -71,4 +78,3 @@ export const config = {
     '/seller/:path*',
   ],
 };
-
