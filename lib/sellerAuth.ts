@@ -2,36 +2,42 @@ import { NextRequest } from 'next/server';
 
 /**
  * Check if seller is authenticated from request cookies
- * This validates the seller-session cookie
+ * This validates the seller-session cookie which has format: SESSION-{timestamp}-{random}
  */
 export function isSellerAuthenticated(request: NextRequest): boolean {
-  const sessionToken = request.cookies.get('seller-session');
-  
-  if (!sessionToken || sessionToken.value.length === 0) {
-    return false;
+  const sessionCookie = request.cookies.get('seller-session');
+  const value = sessionCookie?.value;
+  if (!value || value.length === 0) return false;
+
+  const prefix = 'SESSION-';
+  if (!value.startsWith(prefix)) return false;
+
+  // Remove prefix and split only at the first hyphen after the timestamp.
+  const rest = value.slice(prefix.length);
+  const firstDash = rest.indexOf('-');
+  if (firstDash === -1) return false;
+
+  const timestampStr = rest.slice(0, firstDash);
+  if (!/^[0-9]+$/.test(timestampStr)) return false;
+
+  let timestamp = Number(timestampStr);
+  // Normalize seconds (10-digit) to milliseconds; if it's 13-digit assume ms.
+  if (timestampStr.length === 10) {
+    timestamp = timestamp * 1000;
   }
 
-  // Session tokens are in format: SESSION-{timestamp}-{random}
-  // Extract timestamp from token
-  const tokenParts = sessionToken.value.split('-');
-  if (tokenParts.length < 3 || tokenParts[0] !== 'SESSION') {
-    return false;
-  }
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
 
-  // Check if token has valid format
-  const timestamp = parseInt(tokenParts[1], 10);
-  if (isNaN(timestamp)) {
-    return false;
-  }
+  // Optional: reject timestamps far in the future (allow small clock skew)
+  const now = Date.now();
+  if (timestamp - now > 5 * 60 * 1000) return false; // more than 5 minutes in future
 
   // Check if session is expired (24 hours)
-  const expiresAt = timestamp + (24 * 60 * 60 * 1000);
-  if (Date.now() > expiresAt) {
-    return false;
-  }
+  const expiresAt = timestamp + 24 * 60 * 60 * 1000;
+  if (now > expiresAt) return false;
 
-  // Token format is valid and not expired
-  // Note: In production, you should also verify the token exists in your session store (Redis/database)
+  // Token format appears valid and not expired.
+  // Note: In production, also verify the token exists in your session store (Redis/database)
   return true;
 }
 
@@ -51,4 +57,3 @@ export function requireSellerAuth(request: NextRequest): null | Response {
   }
   return null;
 }
-
